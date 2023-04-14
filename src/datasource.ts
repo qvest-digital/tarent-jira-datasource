@@ -9,6 +9,7 @@ import {
 import {getBackendSrv} from '@grafana/runtime';
 
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
+import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
@@ -20,18 +21,27 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         this.url = instanceSettings.url;
     }
 
-    async doRequest(query: JiraQuery) {
-        const fullpath = this.url + this.routePath + "/rest/api/2/search?expand=changelog&jql=" + query.jqlQuery
-        const result = await getBackendSrv().get(fullpath)
+    async doChangelogRequest(query: JiraQuery): Promise<Issue[]> {
+        const fullpath = this.url + this.routePath + "/rest/api/2/search"
 
+        let response: SearchResults
+        let startAt = 0
+        let result: Issue[] = []
+        do {
+            response = await getBackendSrv().get<SearchResults>(fullpath, {startAt: startAt, jql: query.jqlQuery, expand: 'changelog'})
+            startAt = response.startAt! + response.maxResults!
+            result = result.concat(response.issues!)
+        } while (startAt < response.total!)
         return result;
     }
 
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
         const promises = options.targets.map(async (target) => {
             switch (target.metric) {
-                case 'changelogRaw': return await this.getChangelogRawData(target);
-                case 'cycletime': return await this.getCycletimeData(target);
+                case 'changelogRaw':
+                    return await this.getChangelogRawData(target);
+                case 'cycletime':
+                    return await this.getCycletimeData(target);
             }
             return new MutableDataFrame({
                 refId: target.refId,
@@ -56,26 +66,26 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             ],
         });
 
-        await this.doRequest(target).then(response => {
-            response.issues.forEach((issue: any) => {
+        await this.doChangelogRequest(target).then(issues => {
+            issues.forEach((issue: Issue) => {
                 let issueKey = issue.key
                 let issueType = issue.fields.issuetype.name
-                issue.changelog.histories.forEach((historyy: any) => {
-                    let created = new Date(historyy.created)
-                    let startCreated: any
-                    let endCreated: any
-                    historyy.items.forEach((item: any) => {
-                        if (item.field == 'status') {
-                            if (item.toString  == target.startStatus) {
+                let startCreated: any
+                let endCreated: any
+                issue.changelog?.histories?.forEach((historyy: Changelog) => {
+                    let created = new Date(historyy.created ? historyy.created : "")
+                    historyy.items?.forEach((item: any) => {
+                        if (item.field === 'status') {
+                            if (item.toString === target.startStatus) {
                                 startCreated = created
                             }
-                            if (item.toString == target.endStatus) {
+                            if (item.toString === target.endStatus) {
                                 endCreated = created
                             }
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                frame.appendRow([issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime ]);
+                                frame.appendRow([issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]);
                             }
                         }
                     })
@@ -100,8 +110,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             ],
         });
 
-        await this.doRequest(target).then(response => {
-            response.issues.forEach((issue: any) => {
+        await this.doChangelogRequest(target).then(issues => {
+            issues.forEach((issue: any) => {
                 let issueKey = issue.key
                 let issueType = issue.fields.issuetype.name
                 issue.changelog.histories.forEach((historyy: any) => {
@@ -129,9 +139,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
-            { value: 'cycletime', label: 'cycle time' },
-            { value: 'changelogRaw', label: 'change log - raw data' },
-            { value: 'none', label: 'None' },
+            {value: 'cycletime', label: 'cycle time'},
+            {value: 'changelogRaw', label: 'change log - raw data'},
+            {value: 'none', label: 'None'},
         ]
 
         return Promise.resolve({queryTypes: metrics});
@@ -140,9 +150,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     getAvailableStartStatus(): Promise<StatusTypesResponse> {
         //TODO this must be an
         const options = [
-            { value: 'In Progress', label: 'In Progress' },
-            { value: 'Done', label: 'Done' },
-            { value: 'New', label: 'New' }
+            {value: 'In Progress', label: 'In Progress'},
+            {value: 'Done', label: 'Done'},
+            {value: 'New', label: 'New'}
         ]
 
         return Promise.resolve({statusTypes: options});
@@ -151,9 +161,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     getAvailableEndStatus(): Promise<QueryTypesResponse> {
         //TODO this must be an
         const options = [
-            { value: 'In Progress', label: 'In Progress' },
-            { value: 'Done', label: 'Done' },
-            { value: 'New', label: 'New' }
+            {value: 'In Progress', label: 'In Progress'},
+            {value: 'Done', label: 'Done'},
+            {value: 'New', label: 'New'}
         ]
 
         return Promise.resolve({queryTypes: options});

@@ -35,5 +35,11 @@
         }
       ]
     }
+  ],
+  "includes": [
+    {
+      "type": "dashboard",
+      "path": "dashboards/overview.json"
+    }
   ]
 }
