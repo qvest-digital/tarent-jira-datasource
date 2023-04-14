@@ -4,12 +4,11 @@ import {
     DataSourceApi,
     DataSourceInstanceSettings,
     MutableDataFrame,
-    FieldType, SelectableValue, DataFrame, vectorator,
+    FieldType,
 } from '@grafana/data';
 import {getBackendSrv} from '@grafana/runtime';
 
-import {JiraQuery, MyDataSourceOptions, QueryType, QueryTypesResponse, StatusTypesResponse} from './types';
-import {uniqueId} from "lodash";
+import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
@@ -28,85 +27,97 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         return result;
     }
 
-    async fetchFields(queryType: QueryType): Promise<SelectableValue[]> {
-        const frame = await this.runQuery({ queryType });
-        const ids = vectorator(frame?.fields[0]?.values ?? []);
-        const names = frame?.fields[1]?.values;
-        const types = frame?.fields[2]?.values;
-        const items = frame?.fields[3]?.values;
-        const customs = frame?.fields[4]?.values;
-        const system = frame?.fields[5]?.values;
-        const frameFields = ids
-            .map((value, i) => ({
-                value,
-                text: names.get(i),
-                label: names.get(i),
-                type: types.get(i),
-                items: items.get(i),
-                custom: customs.get(i),
-                system: system.get(i),
-            }))
-            .filter((f: any) => f.text != null);
-        return frameFields.sort(this.sort);
-    }
-
-    private sort(a: SelectableValue, b: SelectableValue) {
-        if (a.text < b.text) {
-            return -1;
-        }
-        if (a.text > b.text) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private runQuery(request: Request | any): Promise<DataFrame> {
-        return new Promise((resolve) => {
-            const req = {
-                targets: [{ ...request, refId: uniqueId(request.queryType ?? '') }],
-            };
-            this.query(req as unknown as DataQueryRequest<JiraQuery>).then((res) => {
-                resolve(res.data[0] as DataFrame);
-            });
-        });
-    }
-
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
         const promises = options.targets.map(async (target) => {
-            const frame = new MutableDataFrame({
+            switch (target.metric) {
+                case 'changelogRaw': return await this.getChangelogRawData(target);
+                case 'cycletime': return await this.getCycletimeData(target);
+            }
+            return new MutableDataFrame({
                 refId: target.refId,
-                fields: [
-                    {name: 'IssueKey', type: FieldType.string},
-                    {name: 'IssueType', type: FieldType.string},
-                    {name: 'Created', type: FieldType.time},
-                    {name: 'field', type: FieldType.string},
-                    {name: 'fromValue', type: FieldType.string},
-                    {name: 'toValue', type: FieldType.string},
-                    { name: 'cycle_time', type: FieldType.number },
-                ],
+                fields: [],
             });
-
-            await this.doRequest(target).then(response => {
-                response.issues.forEach((issue: any) => {
-                    let issueKey = issue.key
-                    let issueType = issue.fields.issuetype.name
-                    issue.changelog.histories.forEach((historyy: any) => {
-                        let created = historyy.created
-                        historyy.items.forEach((item: any) => {
-                            let field = item.field
-                            let fromString = item.fromString
-                            let toString = item.toString
-
-                            frame.appendRow([issueKey, issueType, created, field, fromString,toString, Math.floor(Math.random() * 100) ]);
-                        })
-                    })
-                })
-            })
-
-            return frame;
         });
 
         return Promise.all(promises).then((data) => ({data}));
+    }
+
+    private async getCycletimeData(target: JiraQuery) {
+        const frame = new MutableDataFrame({
+            refId: target.refId,
+            fields: [
+                {name: 'IssueKey', type: FieldType.string},
+                {name: 'IssueType', type: FieldType.string},
+                {name: 'StartStatus', type: FieldType.string},
+                {name: 'StartStatusCreated', type: FieldType.time},
+                {name: 'EndStatus', type: FieldType.string},
+                {name: 'EndStatusCreated', type: FieldType.time},
+                {name: 'CycleTime', type: FieldType.number},
+            ],
+        });
+
+        await this.doRequest(target).then(response => {
+            response.issues.forEach((issue: any) => {
+                let issueKey = issue.key
+                let issueType = issue.fields.issuetype.name
+                issue.changelog.histories.forEach((historyy: any) => {
+                    let created = new Date(historyy.created)
+                    let startCreated: any
+                    let endCreated: any
+                    historyy.items.forEach((item: any) => {
+                        if (item.field == 'status') {
+                            if (item.toString  == target.startStatus) {
+                                startCreated = created
+                            }
+                            if (item.toString == target.endStatus) {
+                                endCreated = created
+                            }
+                            if (startCreated && endCreated) {
+                                let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
+                                let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
+                                frame.appendRow([issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime ]);
+                            }
+                        }
+                    })
+                })
+            })
+        })
+
+        return frame;
+    }
+
+
+    private async getChangelogRawData(target: JiraQuery) {
+        const frame = new MutableDataFrame({
+            refId: target.refId,
+            fields: [
+                {name: 'IssueKey', type: FieldType.string},
+                {name: 'IssueType', type: FieldType.string},
+                {name: 'Created', type: FieldType.time},
+                {name: 'field', type: FieldType.string},
+                {name: 'fromValue', type: FieldType.string},
+                {name: 'toValue', type: FieldType.string},
+            ],
+        });
+
+        await this.doRequest(target).then(response => {
+            response.issues.forEach((issue: any) => {
+                let issueKey = issue.key
+                let issueType = issue.fields.issuetype.name
+                issue.changelog.histories.forEach((historyy: any) => {
+                    let created = historyy.created
+                    historyy.items.forEach((item: any) => {
+                        let field = item.field
+                        let fromString = item.fromString
+                        let toString = item.toString
+
+                        frame.appendRow([issueKey, issueType, created, field, fromString, toString]);
+                    })
+                })
+            })
+        })
+
+        return frame;
     }
 
     async testDatasource() {

@@ -39,3 +39,16 @@ export function useStartStatus(datasource: DataSource): AsyncStatusTypeState {
     error: result.error,
   };
 }
+
+export function useEndStatus(datasource: DataSource): AsyncStatusTypeState {
+  const result = useAsync(async () => {
+    const { queryTypes } = await datasource.getAvailableEndStatus();
+    return queryTypes
+  }, [datasource]);
+
+  return {
+    loading: result.loading,
+    statusTypes: result.value ?? [],
+    error: result.error,
+  };
+}

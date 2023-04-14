@@ -3,7 +3,7 @@ import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
 import {MyDataSourceOptions, JiraQuery} from '../../types';
-import {useMetricTypes, useStartStatus} from "./useQueryTypes";
+import {useEndStatus, useMetricTypes, useStartStatus} from "./useQueryTypes";
 
 type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
 
@@ -11,6 +11,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
 
     const { loading, queryTypes, error } = useMetricTypes(datasource);
     const asyncStartStatus = useStartStatus(datasource);
+    const asyncEndStatus = useEndStatus(datasource);
 
     const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
         onChange({...query, jqlQuery: event.target.value});
@@ -30,13 +31,13 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
     const onEndStatusChange = (value: SelectableValue) => {
         onChange({...query, endStatus: value.value});
         // executes the query
-        onRunQuery();
+        //onRunQuery();
     };
 
     const onMetricChange = (value: SelectableValue) => {
         onChange({...query, metric: value.value});
         // executes the query
-        onRunQuery();
+        //onRunQuery();
     };
 
     const {jqlQuery, quantil, metric,  startStatus, endStatus} = query;
@@ -53,7 +54,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             }
             {metric === "cycletime" &&
             <InlineField label="EndStatus">
-                <Select onChange={onEndStatusChange} value={endStatus} options={queryTypes}/>
+                <Select onChange={onEndStatusChange} value={endStatus} options={asyncEndStatus.statusTypes} isLoading={asyncEndStatus.loading} disabled={!!asyncEndStatus.error}/>
             </InlineField>
             }
             {metric === "cycletime" &&
