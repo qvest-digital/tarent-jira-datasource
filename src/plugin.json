@@ -22,5 +22,18 @@
   "dependencies": {
     "grafanaDependency": "^9.3.8",
     "plugins": []
-  }
+  },
+  "logs": true,
+  "routes": [
+    {
+      "path": "tarent",
+      "url": "{{ .JsonData.url }}/",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.token }}"
+        }
+      ]
+    }
+  ]
 }
