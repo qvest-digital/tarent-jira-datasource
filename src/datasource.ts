@@ -10,6 +10,7 @@ import {getBackendSrv} from '@grafana/runtime';
 
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
+import * as d3 from 'd3';
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
@@ -59,10 +60,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 {name: 'IssueKey', type: FieldType.string},
                 {name: 'IssueType', type: FieldType.string},
                 {name: 'StartStatus', type: FieldType.string},
-                {name: 'StartStatusCreated', type: FieldType.time},
                 {name: 'EndStatus', type: FieldType.string},
                 {name: 'EndStatusCreated', type: FieldType.time},
                 {name: 'CycleTime', type: FieldType.number},
+                {name: 'Quantil', type: FieldType.number},
             ],
         });
 
@@ -85,7 +86,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                let row: unknown[] = [issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]
+                                let row: unknown[] = [issueKey, issueType, startCreated, target.endStatus, endCreated, cycletime]
                                 frame.appendRow(row);
                             }
                         }
@@ -93,6 +94,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 })
             })
         })
+        const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
+        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], 0.85)
+        const quantilField = frame.fields.find((field) => field.name === 'Quantil');
+        quantilField?.values.set(0, quantil)
 
         return frame;
     }
