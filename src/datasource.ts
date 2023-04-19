@@ -26,7 +26,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         const fullpath = this.url + this.routePath + "/rest/api/2/search"
         let responses: Array<Promise<SearchResults>> = []
 
-        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, jql: query.jqlQuery, expand: 'changelog'})
+        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"})
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
@@ -57,6 +57,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                     return await this.getChangelogRawData(target);
                 case 'cycletime':
                     return await this.getCycletimeData(target);
+                default:
+                    throw Error("no metric selected")
             }
             return new MutableDataFrame({
                 refId: target.refId,
