@@ -74,10 +74,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 {name: 'IssueKey', type: FieldType.string},
                 {name: 'IssueType', type: FieldType.string},
                 {name: 'StartStatus', type: FieldType.string},
-                {name: 'StartStatusCreated', type: FieldType.time},
                 {name: 'EndStatus', type: FieldType.string},
                 {name: 'EndStatusCreated', type: FieldType.time},
                 {name: 'CycleTime', type: FieldType.number},
+                {name: 'Quantil', type: FieldType.number},
             ],
         });
 
@@ -100,7 +100,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                let row: unknown[] = [issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]
+                                let row: unknown[] = [issueKey, issueType, target.startStatus, target.endStatus, endCreated, cycletime]
                                 frame.appendRow(row);
                             }
                         }
