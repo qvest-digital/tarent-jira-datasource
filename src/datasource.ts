@@ -24,26 +24,26 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     async doChangelogRequest(query: JiraQuery): Promise<Issue[]> {
         const fullpath = this.url + this.routePath + "/rest/api/2/search"
-        let responses = []
+        let responses: Array<Promise<SearchResults>> = []
 
         let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, jql: query.jqlQuery, expand: 'changelog'})
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
         // if there is more than one result page, fetch the other pages asynchronously to speed things up
-        if (firstPage.total > firstPage.maxResults){
-            let numberOfPages = Math.ceil(firstPage.total / firstPage.maxResults)
+        if (firstPage.total! > firstPage.maxResults!){
+            let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
             for (let i=1; i <= numberOfPages; i++){
-                let startAt = i * firstPage.maxResults
+                let startAt = i * firstPage.maxResults!
                 responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, {startAt: startAt, jql: query.jqlQuery, expand: 'changelog'}))
             }
         }
-        let issues = (await Promise.all(responses)).reduce(
-            (accumulator, currentValue) => accumulator = accumulator.concat(currentValue.issues),
-            []
+        let issues: Issue[] = (await Promise.all(responses)).reduce(
+            (accumulator, currentValue) => accumulator = accumulator.concat(currentValue.issues!),
+            [] as Issue[]
           );
 
-        if (issues.length !== firstPage.total){
+        if (issues.length !== firstPage.total!){
             throw new Error(`ISSUES_TOTAL_FETCH_ERROR: There is a total of ${firstPage.total} issues but only ${issues.length} could be fetched`);
         }
 
@@ -74,10 +74,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 {name: 'IssueKey', type: FieldType.string},
                 {name: 'IssueType', type: FieldType.string},
                 {name: 'StartStatus', type: FieldType.string},
+                {name: 'StartStatusCreated', type: FieldType.time},
                 {name: 'EndStatus', type: FieldType.string},
                 {name: 'EndStatusCreated', type: FieldType.time},
                 {name: 'CycleTime', type: FieldType.number},
-                {name: 'Quantil', type: FieldType.number},
             ],
         });
 
@@ -100,7 +100,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                let row: unknown[] = [issueKey, issueType, startCreated, target.endStatus, endCreated, cycletime]
+                                let row: unknown[] = [issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]
                                 frame.appendRow(row);
                             }
                         }
