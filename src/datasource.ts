@@ -85,7 +85,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                frame.appendRow([issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]);
+                                let row: unknown[] = [issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]
+                                frame.appendRow(row);
                             }
                         }
                     })
