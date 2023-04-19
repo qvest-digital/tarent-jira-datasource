@@ -1,24 +1,31 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import {DataQuery, DataSourceJsonData, SelectableValue} from '@grafana/data';
 
-export interface MyQuery extends DataQuery {
-  queryText?: string;
-  quantil: number;
-  startStatus: string;
-  endStatus: string;
+export interface JiraQuery extends DataQuery {
+  jqlQuery?: string;
+  quantil?: number;
+  startStatus?: string;
+  endStatus?: string;
+  metric?: string;
 }
 
-export const DEFAULT_QUERY: Partial<MyQuery> = {
+export const DEFAULT_QUERY: Partial<JiraQuery> = {
   quantil: 0.85,
   startStatus: 'in Progress',
   endStatus: 'Done',
 };
+
+export enum QueryType {
+  ISSUES = 'issues',
+  PROJECTS = 'project',
+  FIELDS = 'fields',
+  FIELD_VALUES = 'fieldvalues', // cspell: disable-line
+}
 
 /**
  * These are options configured for each DataSource instance
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   url?: string;
-  username?: string;
 }
 
 /**
@@ -27,3 +34,12 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
 export interface MySecureJsonData {
   token?: string;
 }
+
+export type QueryTypesResponse = {
+  queryTypes: Array<SelectableValue<string>>;
+};
+
+
+export type StatusTypesResponse = {
+  statusTypes: Array<SelectableValue<string>>;
+};

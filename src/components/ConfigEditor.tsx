@@ -15,14 +15,6 @@ export function ConfigEditor(props: Props) {
     onOptionsChange({ ...options, jsonData });
   };
 
-  const onUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const jsonData = {
-      ...options.jsonData,
-      username: event.target.value,
-    };
-    onOptionsChange({ ...options, jsonData });
-  };
-
   // Secure field (only sent to the backend)
   const onTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
@@ -52,20 +44,13 @@ export function ConfigEditor(props: Props) {
 
   return (
     <div className="gf-form-group">
-      <InlineField label="URL" labelWidth={12}>
+      <InlineField label="URL" labelWidth={12}
+                   tooltip="The URL is the root URL for your Atlassian instance<br />(example: https://jira.tarent.de)">
         <Input
           onChange={onUrlChange}
           value={jsonData.url || ''}
           placeholder="url for your jira instance"
           width={40}
-        />
-      </InlineField>
-      <InlineField label="username" labelWidth={12}>
-        <Input
-            onChange={onUsernameChange}
-            value={jsonData.username || ''}
-            placeholder="username of your jira instance"
-            width={40}
         />
       </InlineField>
       <InlineField label="token" labelWidth={12}>

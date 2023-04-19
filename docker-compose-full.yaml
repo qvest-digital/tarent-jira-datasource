@@ -1,0 +1,33 @@
+version: '3.0'
+
+services:
+  install_deps:
+    build:
+      dockerfile: ./docker/nodejs/Dockerfile
+      context: .
+    entrypoint: yarn install
+    volumes:
+      - ./:/app
+  install_dist:
+    depends_on:
+      install_deps:
+       condition: service_completed_successfully
+    build:
+      dockerfile: ./docker/nodejs/Dockerfile
+      context: .
+    entrypoint: yarn build
+    volumes:
+      - ./:/app
+  nodejs:
+    depends_on:
+      install_dist:
+       condition: service_completed_successfully
+    build:
+      dockerfile: ./docker/nodejs/Dockerfile
+      context: .
+    entrypoint: yarn dev
+    volumes:
+      - ./:/app
+  grafana:
+    depends_on:
+      - nodejs
