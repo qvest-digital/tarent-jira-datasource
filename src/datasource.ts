@@ -111,7 +111,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             })
         })
         const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], 0.85)
+        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantil / 100)
         const quantilField = frame.fields.find((field) => field.name === 'Quantil');
         quantilField?.values.set(0, quantil)
 
