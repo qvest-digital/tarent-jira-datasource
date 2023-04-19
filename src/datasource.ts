@@ -23,16 +23,30 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     async doChangelogRequest(query: JiraQuery): Promise<Issue[]> {
         const fullpath = this.url + this.routePath + "/rest/api/2/search"
+        let responses: Array<Promise<SearchResults>> = []
 
-        let response: SearchResults
-        let startAt = 0
-        let result: Issue[] = []
-        do {
-            response = await getBackendSrv().get<SearchResults>(fullpath, {startAt: startAt, jql: query.jqlQuery, expand: 'changelog'})
-            startAt = response.startAt! + response.maxResults!
-            result = result.concat(response.issues!)
-        } while (startAt < response.total!)
-        return result;
+        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, jql: query.jqlQuery, expand: 'changelog'})
+        responses = responses.concat(firstResponse)
+        const firstPage = await firstResponse
+
+        // if there is more than one result page, fetch the other pages asynchronously to speed things up
+        if (firstPage.total! > firstPage.maxResults!){
+            let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
+            for (let i=1; i <= numberOfPages; i++){
+                let startAt = i * firstPage.maxResults!
+                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, {startAt: startAt, jql: query.jqlQuery, expand: 'changelog'}))
+            }
+        }
+        let issues: Issue[] = (await Promise.all(responses)).reduce(
+            (accumulator, currentValue) => accumulator = accumulator.concat(currentValue.issues!),
+            [] as Issue[]
+          );
+
+        if (issues.length !== firstPage.total!){
+            throw new Error(`ISSUES_TOTAL_FETCH_ERROR: There is a total of ${firstPage.total} issues but only ${issues.length} could be fetched`);
+        }
+
+        return issues
     }
 
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
