@@ -37,7 +37,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             return Promise.resolve(cachedData as T);
         }
 
-        let response =  getBackendSrv().get<T>(url, {startAt: 0, ...params})
+        let response =  getBackendSrv().get<T>(url, {...params})
         // Store the data in the cache for future use
         await this.cacheStore.setItem(urlWithParams, response);
         console.log('Data stored in cache');
