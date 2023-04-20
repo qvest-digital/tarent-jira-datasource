@@ -10,4 +10,3 @@ services:
       - 3000:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/tarent-jira-datasource
-      - ./provisioning:/etc/grafana/provisioning
