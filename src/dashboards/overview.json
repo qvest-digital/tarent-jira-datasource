@@ -64,6 +64,7 @@
         "type": "tarent-jira-datasource",
         "uid": "${DS_JIRA}"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -85,7 +86,7 @@
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 7,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -96,7 +97,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed+area"
             }
           },
           "mappings": [],
@@ -106,10 +107,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -117,12 +114,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 17,
-        "w": 15,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 1,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [],
@@ -135,7 +132,6 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "9.3.8",
       "targets": [
         {
           "datasource": {
@@ -144,13 +140,28 @@
           },
           "endStatus": "Done",
           "jqlQuery": "project = 'MAEN'",
-          "key": "Q-76dc6a3e-f710-4755-bc55-bdcd5afde062-0",
           "metric": "cycletime",
+          "quantil": 1,
           "refId": "A",
           "startStatus": "In Progress"
         }
       ],
       "title": "cycletime scatter plot",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Quantil",
+                "handlerKey": "threshold1",
+                "reducerId": "firstNotNull"
+              }
+            ]
+          }
+        }
+      ],
       "type": "timeseries"
     }
   ],
@@ -162,13 +173,13 @@
     "list": []
   },
   "time": {
-    "from": "2019-01-02T08:45:17.000Z",
-    "to": "2023-03-22T16:08:04.000Z"
+    "from": "2019-01-24T14:39:28.000Z",
+    "to": "2023-03-30T13:24:45.000Z"
   },
   "timepicker": {},
   "timezone": "",
   "title": "overview",
-  "uid": "hczh0WP4z",
+  "uid": "kUdYoTPVk",
   "version": 1,
   "weekStart": ""
 }

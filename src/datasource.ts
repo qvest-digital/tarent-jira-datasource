@@ -10,6 +10,7 @@ import {getBackendSrv} from '@grafana/runtime';
 
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
+import * as d3 from 'd3';
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
@@ -25,7 +26,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         const fullpath = this.url + this.routePath + "/rest/api/2/search"
         let responses: Array<Promise<SearchResults>> = []
 
-        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, jql: query.jqlQuery, expand: 'changelog'})
+        let params = {startAt: 0, jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
+        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, params)
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
@@ -33,8 +35,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         if (firstPage.total! > firstPage.maxResults!){
             let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
             for (let i=1; i <= numberOfPages; i++){
-                let startAt = i * firstPage.maxResults!
-                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, {startAt: startAt, jql: query.jqlQuery, expand: 'changelog'}))
+                params.startAt = i * firstPage.maxResults!
+                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, params))
             }
         }
         let issues: Issue[] = (await Promise.all(responses)).reduce(
@@ -56,6 +58,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                     return await this.getChangelogRawData(target);
                 case 'cycletime':
                     return await this.getCycletimeData(target);
+                default:
+                    throw Error("no metric selected")
             }
             return new MutableDataFrame({
                 refId: target.refId,
@@ -73,10 +77,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 {name: 'IssueKey', type: FieldType.string},
                 {name: 'IssueType', type: FieldType.string},
                 {name: 'StartStatus', type: FieldType.string},
-                {name: 'StartStatusCreated', type: FieldType.time},
                 {name: 'EndStatus', type: FieldType.string},
                 {name: 'EndStatusCreated', type: FieldType.time},
                 {name: 'CycleTime', type: FieldType.number},
+                {name: 'Quantil', type: FieldType.number},
             ],
         });
 
@@ -99,7 +103,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                             if (startCreated && endCreated) {
                                 let diff = Math.abs(endCreated.getTime() - startCreated.getTime());
                                 let cycletime = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
-                                let row: unknown[] = [issueKey, issueType, target.startStatus, startCreated, target.endStatus, endCreated, cycletime]
+                                let row: unknown[] = [issueKey, issueType, target.startStatus, target.endStatus, endCreated, cycletime]
                                 frame.appendRow(row);
                             }
                         }
@@ -107,6 +111,10 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 })
             })
         })
+        const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
+        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantil / 100)
+        const quantilField = frame.fields.find((field) => field.name === 'Quantil');
+        quantilField?.values.set(0, quantil)
 
         return frame;
     }

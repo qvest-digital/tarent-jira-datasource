@@ -1,15 +1,15 @@
 import {DataQuery, DataSourceJsonData, SelectableValue} from '@grafana/data';
 
 export interface JiraQuery extends DataQuery {
-  jqlQuery?: string;
-  quantil?: number;
-  startStatus?: string;
-  endStatus?: string;
-  metric?: string;
+  jqlQuery: string;
+  quantil: number;
+  startStatus: string;
+  endStatus: string;
+  metric: string;
 }
 
 export const DEFAULT_QUERY: Partial<JiraQuery> = {
-  quantil: 0.85,
+  quantil: 85,
   startStatus: 'in Progress',
   endStatus: 'Done',
 };

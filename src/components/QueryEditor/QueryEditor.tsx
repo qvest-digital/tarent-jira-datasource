@@ -44,6 +44,9 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
 
     return (
         <div className="gf-form">
+            <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used?">
+                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} required={true}/>
+            </InlineField>
             <InlineField label="Metric">
                 <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error}/>
             </InlineField>
@@ -59,12 +62,9 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             }
             {metric === "cycletime" &&
             <InlineField label="Quantil" >
-                <Input onChange={onQuantilChange} value={quantil} width={8} type="number"/>
+                <Input onChange={onQuantilChange} value={quantil} width={8} type="number" min={1} max={100}/>
             </InlineField>
             }
-            <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used?">
-                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} required={true}/>
-            </InlineField>
         </div>
     );
 }
