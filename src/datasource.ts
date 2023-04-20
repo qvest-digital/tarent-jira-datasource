@@ -26,8 +26,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         const fullpath = this.url + this.routePath + "/rest/api/2/search"
         let responses: Array<Promise<SearchResults>> = []
 
-        let params = {startAt: 0, jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
-        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, params)
+        const params = {jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
+        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, ...params})
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
@@ -35,8 +35,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         if (firstPage.total! > firstPage.maxResults!){
             let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
             for (let i=1; i <= numberOfPages; i++){
-                params.startAt = i * firstPage.maxResults!
-                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, params))
+                const currentStartAt = i * firstPage.maxResults!
+                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
             }
         }
         let issues: Issue[] = (await Promise.all(responses)).reduce(
