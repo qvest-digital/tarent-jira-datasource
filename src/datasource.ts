@@ -18,7 +18,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     routePath = '/tarent';
     url?: string;
     cacheStore = localforage.createInstance({
-        name: 'myCacheStore'
+        name: 'TarentJiraDatasourceRequests'
     });
 
     constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
