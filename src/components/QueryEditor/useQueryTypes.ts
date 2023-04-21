@@ -1,6 +1,7 @@
 import { useAsync } from 'react-use';
 import type { SelectableValue } from '@grafana/data';
 import {DataSource} from "../../datasource";
+import {JiraQuery} from "../../types";
 
 type AsyncQueryTypeState = {
   loading: boolean;
@@ -27,9 +28,9 @@ export function useMetricTypes(datasource: DataSource): AsyncQueryTypeState {
   };
 }
 
-export function useStartStatus(datasource: DataSource): AsyncStatusTypeState {
+export function useStartStatus(datasource: DataSource, query: JiraQuery): AsyncStatusTypeState {
   const result = useAsync(async () => {
-    const { statusTypes } = await datasource.getAvailableStartStatus();
+    const { statusTypes } = await datasource.getAvailableStartStatus(query);
     return statusTypes
   }, [datasource]);
 
@@ -40,9 +41,9 @@ export function useStartStatus(datasource: DataSource): AsyncStatusTypeState {
   };
 }
 
-export function useEndStatus(datasource: DataSource): AsyncStatusTypeState {
+export function useEndStatus(datasource: DataSource,query: JiraQuery): AsyncStatusTypeState {
   const result = useAsync(async () => {
-    const { queryTypes } = await datasource.getAvailableEndStatus();
+    const { queryTypes } = await datasource.getAvailableEndStatus(query);
     return queryTypes
   }, [datasource]);
 

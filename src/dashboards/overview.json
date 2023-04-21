@@ -141,7 +141,7 @@
           "endStatus": "Done",
           "jqlQuery": "project = 'MAEN'",
           "metric": "cycletime",
-          "quantil": 1,
+          "quantile": 85,
           "refId": "A",
           "startStatus": "In Progress"
         }
@@ -154,7 +154,7 @@
             "configRefId": "A",
             "mappings": [
               {
-                "fieldName": "Quantil",
+                "fieldName": "Quantile",
                 "handlerKey": "threshold1",
                 "reducerId": "firstNotNull"
               }

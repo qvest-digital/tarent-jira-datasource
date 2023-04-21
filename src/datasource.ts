@@ -166,25 +166,40 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
             {value: 'cycletime', label: 'cycle time'},
-            {value: 'changelogRaw', label: 'change log - raw data'},
             {value: 'none', label: 'None'},
         ]
 
         return Promise.resolve({queryTypes: metrics});
     }
 
-    getAvailableStartStatus(): Promise<StatusTypesResponse> {
-        //TODO this must be an
-        const options = [
-            {value: 'In Progress', label: 'In Progress'},
-            {value: 'Done', label: 'Done'},
-            {value: 'New', label: 'New'}
-        ]
+    async getAvailableStartStatus(query: JiraQuery): Promise<StatusTypesResponse> {
+        let data = await this.getChangelogRawData(query)
+        const fromField = data.fields.find((field) => field.name === 'fromValue');
+        const fieldField = data.fields.find((field) => field.name === 'field');
+        const foundStatus: string[] = []
+        for(const [index,value] of fieldField!.values.toArray()){
+            if (value.value === 'status') {
+                const correspondingStatus = fromField!.values.get(index).value
+                if (foundStatus.indexOf(correspondingStatus) === -1) {
+                    foundStatus.push(correspondingStatus)
+                }
+            }
+        }
+
+        const options = foundStatus.map(value =>  {
+            return {value: value, label: value }
+        })
+
+        // const options = [
+        //     {value: 'In Progress', label: 'In Progress'},
+        //     {value: 'Done', label: 'Done'},
+        //     {value: 'New', label: 'New'}
+        // ]
 
         return Promise.resolve({statusTypes: options});
     }
 
-    getAvailableEndStatus(): Promise<QueryTypesResponse> {
+    async getAvailableEndStatus(query: JiraQuery): Promise<QueryTypesResponse> {
         //TODO this must be an
         const options = [
             {value: 'In Progress', label: 'In Progress'},

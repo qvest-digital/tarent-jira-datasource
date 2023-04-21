@@ -10,8 +10,8 @@ type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
 export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
 
     const { loading, queryTypes, error } = useMetricTypes(datasource);
-    const asyncStartStatus = useStartStatus(datasource);
-    const asyncEndStatus = useEndStatus(datasource);
+    const asyncStartStatus = useStartStatus(datasource, query);
+    const asyncEndStatus = useEndStatus(datasource, query);
 
     const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
         onChange({...query, jqlQuery: event.target.value});
@@ -53,10 +53,10 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             <InlineField label="Metric">
                 <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error}/>
             </InlineField>
-            {metric === "cycletime" &&
+            {metric === "cycletime" ?
             <InlineField label="StartStatus">
-                <Select onChange={onStartStatusChange} value={startStatus} options={asyncStartStatus.statusTypes} isLoading={asyncStartStatus.loading} disabled={!!asyncStartStatus.error}/>
-            </InlineField>
+                <Select onChange={onStartStatusChange} value={startStatus} options={asyncStartStatus.statusTypes} isLoading={asyncStartStatus.loading} disabled={!!asyncStartStatus.error} />
+            </InlineField> : null
             }
             {metric === "cycletime" &&
             <InlineField label="EndStatus">
@@ -64,7 +64,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             </InlineField>
             }
             {metric === "cycletime" &&
-            <InlineField label="Quantil" >
+            <InlineField label="Quantile" >
                 <Input onChange={onQuantilChange} value={quantile} width={8} type="number" min={1} max={100}/>
             </InlineField>
             }
