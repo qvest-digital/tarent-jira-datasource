@@ -11,37 +11,17 @@ import {getBackendSrv} from '@grafana/runtime';
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
-import * as localforage from "localforage";
+import {doCachedRequest} from "./cache";
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     routePath = '/tarent';
     url?: string;
-    cacheStore = localforage.createInstance({
-        name: 'TarentJiraDatasourceRequests'
-    });
+
 
     constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
         super(instanceSettings);
         this.url = instanceSettings.url;
-    }
-
-    private async doCachedRequest<T>(url: string, params?: any): Promise<T> {
-        let urlWithParams = url + "?" + new URLSearchParams(params).toString()
-        // Try to retrieve the data from the cache
-        const cachedData = await this.cacheStore.getItem(urlWithParams);
-
-        if (cachedData !== null) {
-            // If the data is found in the cache, return it
-            console.log('Data found in cache');
-            return Promise.resolve(cachedData as T);
-        }
-
-        let response =  getBackendSrv().get<T>(url, {...params})
-        // Store the data in the cache for future use
-        await this.cacheStore.setItem(urlWithParams, response);
-        console.log('Data stored in cache');
-        return  response
     }
 
     async doChangelogRequest(query: JiraQuery): Promise<Issue[]> {
@@ -50,7 +30,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
         const params = {jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
 
-        let firstResponse = this.doCachedRequest<SearchResults>(fullpath, {startAt: 0, ...params})
+        let firstResponse = doCachedRequest<SearchResults>(fullpath, {startAt: 0, ...params})
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
@@ -59,7 +39,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
             for (let i=1; i <= numberOfPages; i++){
                 const currentStartAt = i * firstPage.maxResults!
-                responses = responses.concat(this.doCachedRequest<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
+                responses = responses.concat(doCachedRequest<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
             }
         }
         let issues: Issue[] = (await Promise.all(responses)).reduce(
@@ -135,7 +115,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             })
         })
         const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantil / 100)
+        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
         const quantilField = frame.fields.find((field) => field.name === 'Quantil');
         quantilField?.values.set(0, quantil)
 
