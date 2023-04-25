@@ -50,7 +50,7 @@ export function ConfigEditor(props: Props) {
   return (
     <div className="gf-form-group">
       <InlineField label="URL" labelWidth={12}
-                   tooltip="The URL is the root URL for your Atlassian instance<br />(example: https://jira.tarent.de)">
+                   tooltip="The URL is the root URL for your Atlassian instance (example: https://jira.tarent.de)">
         <Input
           onChange={onUrlChange}
           value={jsonData.url || ''}

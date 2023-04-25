@@ -9,6 +9,7 @@ export interface JiraQuery extends DataQuery {
 }
 
 export const DEFAULT_QUERY: Partial<JiraQuery> = {
+  jqlQuery: "project = 'FOOBAR'",
   quantile: 85,
   startStatus: 'in Progress',
   endStatus: 'Done',

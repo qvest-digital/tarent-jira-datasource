@@ -2,7 +2,7 @@ import React, {ChangeEvent} from 'react';
 import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
-import {MyDataSourceOptions, JiraQuery} from '../../types';
+import {MyDataSourceOptions, JiraQuery, DEFAULT_QUERY} from '../../types';
 import {useEndStatus, useMetricTypes, useStartStatus} from "./useQueryTypes";
 
 type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
@@ -17,7 +17,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
         onChange({...query, jqlQuery: event.target.value});
     };
 
-    const onQuantilChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const onQuantileChange = (event: ChangeEvent<HTMLInputElement>) => {
         onChange({...query, quantile: parseFloat(event.target.value)});
         // executes the query
         // onRunQuery();
@@ -40,32 +40,32 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
         //onRunQuery();
     };
 
-    
-    
+
+
     const {jqlQuery, quantile, metric,  startStatus, endStatus} = query;
 
 
     return (
         <div className="gf-form">
             <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used? for example: project = 'FOOBAR' " invalid={!jqlQuery} error={"this field is required"} required={true}>
-                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} />
+                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || DEFAULT_QUERY.jqlQuery}/>
             </InlineField>
-            <InlineField label="Metric">
-                <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error}/>
+            <InlineField label="Metric" tooltip="Which metric you want to see? " invalid={!metric} error={"this field is required"} required={true}>
+                <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error} />
             </InlineField>
-            {metric === "cycletime" ?
-            <InlineField label="StartStatus">
-                <Select onChange={onStartStatusChange} value={startStatus} options={asyncStartStatus.statusTypes} isLoading={asyncStartStatus.loading} disabled={!!asyncStartStatus.error} />
-            </InlineField> : null
+            {metric === "cycletime" &&
+            <InlineField label="StartStatus" required={true}>
+                <Select onChange={onStartStatusChange} value={startStatus} options={asyncStartStatus.statusTypes} isLoading={asyncStartStatus.loading} disabled={!!asyncStartStatus.error}/>
+            </InlineField>
             }
             {metric === "cycletime" &&
-            <InlineField label="EndStatus">
+            <InlineField label="EndStatus" required={true}>
                 <Select onChange={onEndStatusChange} value={endStatus} options={asyncEndStatus.statusTypes} isLoading={asyncEndStatus.loading} disabled={!!asyncEndStatus.error}/>
             </InlineField>
             }
             {metric === "cycletime" &&
-            <InlineField label="Quantile" >
-                <Input onChange={onQuantilChange} value={quantile} width={8} type="number" min={1} max={100}/>
+            <InlineField label="Quantile" required={true}>
+                <Input onChange={onQuantileChange} width={8} type="number" min={1} max={100} value={quantile || DEFAULT_QUERY.quantile}/>
             </InlineField>
             }
         </div>
