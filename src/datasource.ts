@@ -127,7 +127,6 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             quantileField?.values.set(i, quantile)
         }
 
-
         return frame;
     }
 
