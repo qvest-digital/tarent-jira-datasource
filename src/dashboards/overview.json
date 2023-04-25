@@ -141,7 +141,7 @@
           "endStatus": "Done",
           "jqlQuery": "project = 'MAEN'",
           "metric": "cycletime",
-          "quantil": 1,
+          "quantile": 85,
           "refId": "A",
           "startStatus": "In Progress"
         }
@@ -154,7 +154,7 @@
             "configRefId": "A",
             "mappings": [
               {
-                "fieldName": "Quantil",
+                "fieldName": "Quantile",
                 "handlerKey": "threshold1",
                 "reducerId": "firstNotNull"
               }
@@ -173,8 +173,8 @@
     "list": []
   },
   "time": {
-    "from": "2019-01-24T14:39:28.000Z",
-    "to": "2023-03-30T13:24:45.000Z"
+    "from": "now-1y",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",
