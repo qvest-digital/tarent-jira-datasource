@@ -5,6 +5,7 @@ import {
     DataSourceInstanceSettings,
     MutableDataFrame,
     FieldType,
+    DataFrameView,
 } from '@grafana/data';
 import {getBackendSrv} from '@grafana/runtime';
 
@@ -123,7 +124,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     }
 
 
-    private async getChangelogRawData(target: JiraQuery) {
+    private async getChangelogRawData(target: JiraQuery): Promise<MutableDataFrame> {
         const frame = new MutableDataFrame({
             refId: target.refId,
             fields: [
@@ -174,29 +175,19 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     async getAvailableStartStatus(query: JiraQuery): Promise<StatusTypesResponse> {
         let data = await this.getChangelogRawData(query)
-        const fromField = data.fields.find((field) => field.name === 'fromValue');
-        const fieldField = data.fields.find((field) => field.name === 'field');
-        const foundStatus: string[] = []
-        for(const [index,value] of fieldField!.values.toArray()){
-            if (value.value === 'status') {
-                const correspondingStatus = fromField!.values.get(index).value
-                if (foundStatus.indexOf(correspondingStatus) === -1) {
-                    foundStatus.push(correspondingStatus)
-                }
+
+        const view = new DataFrameView(data);
+        let options: Set<string> = new Set()
+        view.forEach((row) => {
+            if (row.field === 'status') {
+                options = options.add(row.fromValue)
             }
-        }
+        });
+        let formatedOptions: any = []
+        options.forEach(option => formatedOptions.push({ 'value': option, 'label': option}))
+        console.log(formatedOptions)
 
-        const options = foundStatus.map(value =>  {
-            return {value: value, label: value }
-        })
-
-        // const options = [
-        //     {value: 'In Progress', label: 'In Progress'},
-        //     {value: 'Done', label: 'Done'},
-        //     {value: 'New', label: 'New'}
-        // ]
-
-        return Promise.resolve({statusTypes: options});
+        return Promise.resolve({statusTypes: formatedOptions});
     }
 
     async getAvailableEndStatus(query: JiraQuery): Promise<QueryTypesResponse> {
