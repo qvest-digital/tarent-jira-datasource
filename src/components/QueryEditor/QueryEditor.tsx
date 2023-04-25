@@ -49,7 +49,6 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
         <div className="gf-form">
             <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used? for example: project = 'FOOBAR' " invalid={!jqlQuery} error={"this field is required"} required={true}>
                 <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || DEFAULT_QUERY.jqlQuery}/>
-                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} />
             </InlineField>
             <InlineField label="Metric" tooltip="Which metric you want to see? " invalid={!metric} error={"this field is required"} required={true}>
                 <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error} />
