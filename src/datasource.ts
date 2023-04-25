@@ -11,11 +11,13 @@ import {getBackendSrv} from '@grafana/runtime';
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
+import {doCachedRequest} from "./cache";
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     routePath = '/tarent';
     url?: string;
+
 
     constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
         super(instanceSettings);
@@ -27,7 +29,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         let responses: Array<Promise<SearchResults>> = []
 
         const params = {jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
-        let firstResponse =  getBackendSrv().get<SearchResults>(fullpath, {startAt: 0, ...params})
+
+        let firstResponse = doCachedRequest<SearchResults>(fullpath, {startAt: 0, ...params})
         responses = responses.concat(firstResponse)
         const firstPage = await firstResponse
 
@@ -36,7 +39,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
             for (let i=1; i <= numberOfPages; i++){
                 const currentStartAt = i * firstPage.maxResults!
-                responses = responses.concat(getBackendSrv().get<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
+                responses = responses.concat(doCachedRequest<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
             }
         }
         let issues: Issue[] = (await Promise.all(responses)).reduce(
@@ -112,7 +115,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             })
         })
         const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantil / 100)
+        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
         const quantilField = frame.fields.find((field) => field.name === 'Quantil');
         quantilField?.values.set(0, quantil)
 

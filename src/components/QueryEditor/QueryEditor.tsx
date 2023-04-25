@@ -18,7 +18,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
     };
 
     const onQuantilChange = (event: ChangeEvent<HTMLInputElement>) => {
-        onChange({...query, quantil: parseFloat(event.target.value)});
+        onChange({...query, quantile: parseFloat(event.target.value)});
         // executes the query
         // onRunQuery();
     };
@@ -40,12 +40,15 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
         //onRunQuery();
     };
 
-    const {jqlQuery, quantil, metric,  startStatus, endStatus} = query;
+    
+    
+    const {jqlQuery, quantile, metric,  startStatus, endStatus} = query;
+
 
     return (
         <div className="gf-form">
-            <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used?">
-                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} required={true}/>
+            <InlineField label="JQl Query" labelWidth={16} tooltip="Which JQL should be used? for example: project = 'FOOBAR' " invalid={!jqlQuery} error={"this field is required"} required={true}>
+                <Input onChange={onQueryTextChange} placeholder={'insert the JQL Query here'} value={jqlQuery || ''} />
             </InlineField>
             <InlineField label="Metric">
                 <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error}/>
@@ -62,7 +65,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             }
             {metric === "cycletime" &&
             <InlineField label="Quantil" >
-                <Input onChange={onQuantilChange} value={quantil} width={8} type="number" min={1} max={100}/>
+                <Input onChange={onQuantilChange} value={quantile} width={8} type="number" min={1} max={100}/>
             </InlineField>
             }
         </div>
