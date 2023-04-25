@@ -6,7 +6,7 @@ import {
     MutableDataFrame,
     FieldType,
 } from '@grafana/data';
-import {getBackendSrv} from '@grafana/runtime';
+import {getBackendSrv, getTemplateSrv} from '@grafana/runtime';
 
 import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
@@ -83,11 +83,14 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 {name: 'EndStatus', type: FieldType.string},
                 {name: 'EndStatusCreated', type: FieldType.time},
                 {name: 'CycleTime', type: FieldType.number},
-                {name: 'Quantil', type: FieldType.number},
+                {name: 'Quantile', type: FieldType.number},
             ],
         });
 
         await this.doChangelogRequest(target).then(issues => {
+            const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
+            const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
+
             issues.forEach((issue: Issue) => {
                 let issueKey = issue.key
                 let issueType = issue.fields.issuetype.name
@@ -95,6 +98,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 let endCreated: any
                 issue.changelog?.histories?.forEach((historyy: Changelog) => {
                     let created = new Date(historyy.created ? historyy.created : "")
+                    if (created < fromDate || created > toDate ) {
+                        return ;
+                    }
                     historyy.items?.forEach((item: any) => {
                         if (item.field === 'status') {
                             if (item.toString === target.startStatus) {
@@ -115,9 +121,11 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             })
         })
         const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantil = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
-        const quantilField = frame.fields.find((field) => field.name === 'Quantil');
-        quantilField?.values.set(0, quantil)
+        const quantile = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
+        const quantileField = frame.fields.find((field) => field.name === 'Quantile');
+        for (let i = 0; i < quantileField!.values.length; i++) {
+            quantileField?.values.set(i, quantile)
+        }
 
         return frame;
     }
