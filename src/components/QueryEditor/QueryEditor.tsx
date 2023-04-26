@@ -3,41 +3,43 @@ import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
 import {MyDataSourceOptions, JiraQuery, DEFAULT_QUERY} from '../../types';
-import {useEndStatus, useMetricTypes, useStartStatus} from "./useQueryTypes";
+import {useMetricTypes, useStatus} from "./useQueryTypes";
 
 type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
 
 export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
 
     const { loading, queryTypes, error } = useMetricTypes(datasource);
-    const asyncStartStatus = useStartStatus(datasource, query);
-    const asyncEndStatus = useEndStatus(datasource, query);
+    const asyncStartStatus = useStatus(datasource, query, 'fromValue');
+    const asyncEndStatus = useStatus(datasource, query, 'toValue');
 
     const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
         onChange({...query, jqlQuery: event.target.value});
+        // executes the query
+        onRunQuery();
     };
 
     const onQuantileChange = (event: ChangeEvent<HTMLInputElement>) => {
         onChange({...query, quantile: parseFloat(event.target.value)});
         // executes the query
-        // onRunQuery();
+        onRunQuery();
     };
     const onStartStatusChange = (value: SelectableValue) => {
         onChange({...query, startStatus: value.value});
         // executes the query
-        // onRunQuery();
+        onRunQuery();
     };
 
     const onEndStatusChange = (value: SelectableValue) => {
         onChange({...query, endStatus: value.value});
         // executes the query
-        //onRunQuery();
+        onRunQuery();
     };
 
     const onMetricChange = (value: SelectableValue) => {
         onChange({...query, metric: value.value});
         // executes the query
-        //onRunQuery();
+        onRunQuery();
     };
 
 

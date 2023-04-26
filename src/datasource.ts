@@ -64,10 +64,6 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 default:
                     throw Error("no metric selected")
             }
-            return new MutableDataFrame({
-                refId: target.refId,
-                fields: [],
-            });
         });
 
         return Promise.all(promises).then((data) => ({data}));
@@ -181,31 +177,19 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         return Promise.resolve({queryTypes: metrics});
     }
 
-    async getAvailableStartStatus(query: JiraQuery): Promise<StatusTypesResponse> {
+    async getAvailableStatus(query: JiraQuery, fieldName: string): Promise<StatusTypesResponse> {
         let data = await this.getChangelogRawData(query)
 
         const view = new DataFrameView(data);
         let options: Set<string> = new Set()
         view.forEach((row) => {
             if (row.field === 'status') {
-                options = options.add(row.fromValue)
+                options = options.add(row[fieldName])
             }
         });
         let formatedOptions: any = []
         options.forEach(option => formatedOptions.push({ 'value': option, 'label': option}))
-        console.log(formatedOptions)
 
         return Promise.resolve({statusTypes: formatedOptions});
-    }
-
-    async getAvailableEndStatus(query: JiraQuery): Promise<QueryTypesResponse> {
-        //TODO this must be an
-        const options = [
-            {value: 'In Progress', label: 'In Progress'},
-            {value: 'Done', label: 'Done'},
-            {value: 'New', label: 'New'}
-        ]
-
-        return Promise.resolve({queryTypes: options});
     }
 }
