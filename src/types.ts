@@ -1,4 +1,5 @@
-import {DataQuery, DataSourceJsonData, SelectableValue} from '@grafana/data';
+import {DataSourceJsonData, SelectableValue} from '@grafana/data';
+import {DataQuery} from '@grafana/schema';
 
 export interface JiraQuery extends DataQuery {
   jqlQuery: string;
@@ -7,13 +8,6 @@ export interface JiraQuery extends DataQuery {
   endStatus: string;
   metric: string;
 }
-
-export const DEFAULT_QUERY: Partial<JiraQuery> = {
-  jqlQuery: "project = 'FOOBAR'",
-  quantile: 85,
-  startStatus: 'in Progress',
-  endStatus: 'Done',
-};
 
 
 /**

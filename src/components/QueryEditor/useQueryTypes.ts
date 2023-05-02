@@ -9,7 +9,7 @@ type AsyncQueryTypeState = {
   error: Error | undefined;
 };
 
-type AsyncStatusTypeState = {
+export type AsyncStatusTypeState = {
   loading: boolean;
   statusTypes: Array<SelectableValue<string>>;
   error: Error | undefined;
