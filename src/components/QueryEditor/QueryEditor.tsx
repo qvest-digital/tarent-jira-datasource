@@ -1,4 +1,4 @@
-import React, {ChangeEvent, useState} from 'react';
+import React, {ChangeEvent} from 'react';
 import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
@@ -58,7 +58,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
         // onRunQuery();
     };
 
-    const {jqlQuery, quantile, metric,  startStatus, endStatus} = query;
+    const {jqlQuery, quantile, metric} = query;
 
 
     return (
