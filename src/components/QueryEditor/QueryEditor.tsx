@@ -73,7 +73,7 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
                 ? <StartStatusSelect datasource={datasource}  onChange={onChange} query={query} ></StartStatusSelect>
                 : ''
             }
-            {metric === METRICS.CYCLE_TIME
+            {metric === METRICS.CYCLE_TIME || metric === METRICS.THROUGHPUT
                 ? <EndStatusSelect datasource={datasource}  onChange={onChange}  query={query} ></EndStatusSelect>
                 : ''
             }

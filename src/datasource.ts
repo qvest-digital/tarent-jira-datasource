@@ -61,12 +61,59 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                     return await this.getChangelogRawData(target);
                 case METRICS.CYCLE_TIME:
                     return await this.getCycletimeData(target);
+                case METRICS.THROUGHPUT:
+                    return await this.getThroughputData(target);
                 default:
                     throw Error("no metric selected")
             }
         });
 
         return Promise.all(promises).then((data) => ({data}));
+    }
+
+    private async getThroughputData(target: JiraQuery): Promise<MutableDataFrame<any>> {
+        const frame = new MutableDataFrame({
+            refId: target.refId,
+            fields: [
+                {name: 'CW', type: FieldType.string},
+                {name: 'count', type: FieldType.number},
+
+            ],
+        });
+
+        await this.doChangelogRequest(target).then(issues => {
+            const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
+            const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
+            let dataMap = new Map<string, number>()
+            issues.forEach((issue: Issue) => {
+                let endCreated: Date
+                issue.changelog?.histories?.forEach((historyy: Changelog) => {
+                    let created = new Date(historyy.created ? historyy.created : "")
+                    if (created < fromDate || created > toDate ) {
+                        return ;
+                    }
+                    historyy.items?.forEach((item: any) => {
+                        if (item.field === 'status') {
+                            if (item.toString === target.endStatus) {
+                                endCreated = created
+                                let cw = d3.timeSunday.count(d3.timeYear(endCreated), endCreated)
+                                let cwYear = endCreated.getFullYear().toString() + "-" + (cw < 10 ? 0 : '') + cw
+                                if (dataMap.has(cwYear)) {
+                                    dataMap.set(cwYear, dataMap.get(cwYear)! + 1)
+                                } else {
+                                    dataMap.set(cwYear, 1)
+                                }
+                            }
+                        }
+                    })
+
+                })
+            })
+            dataMap.forEach((value, key) => {
+                frame.appendRow([key, value])
+            })
+        })
+        return frame;
     }
 
     private async getCycletimeData(target: JiraQuery) {
@@ -168,6 +215,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
             {value: METRICS.CYCLE_TIME, label: 'cycle time'},
+            {value: METRICS.THROUGHPUT, label: 'throughput'},
             {value: METRICS.CHANGELOG_RAW, label: 'change log - raw data'},
             {value: METRICS.NONE, label: 'None'},
         ]

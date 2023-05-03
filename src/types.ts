@@ -12,7 +12,8 @@ export interface JiraQuery extends DataQuery {
 export const METRICS = {
   CYCLE_TIME : 'cycletime',
   NONE : 'none',
-  CHANGELOG_RAW: 'changelogRaw'
+  CHANGELOG_RAW: 'changelogRaw',
+  THROUGHPUT: 'throughput'
 }
 
 /**
