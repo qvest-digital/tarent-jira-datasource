@@ -1,4 +1,5 @@
-import {DataQuery, DataSourceJsonData, SelectableValue} from '@grafana/data';
+import {DataSourceJsonData, SelectableValue} from '@grafana/data';
+import {DataQuery} from '@grafana/schema';
 
 export interface JiraQuery extends DataQuery {
   jqlQuery: string;
@@ -8,13 +9,11 @@ export interface JiraQuery extends DataQuery {
   metric: string;
 }
 
-export const DEFAULT_QUERY: Partial<JiraQuery> = {
-  jqlQuery: "project = 'FOOBAR'",
-  quantile: 85,
-  startStatus: 'in Progress',
-  endStatus: 'Done',
-};
-
+export const METRICS = {
+  CYCLE_TIME : 'cycletime',
+  NONE : 'none',
+  CHANGELOG_RAW: 'changelogRaw'
+}
 
 /**
  * These are options configured for each DataSource instance

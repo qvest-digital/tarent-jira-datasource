@@ -5,10 +5,11 @@ import {
     DataSourceInstanceSettings,
     MutableDataFrame,
     FieldType,
+    DataFrameView,
 } from '@grafana/data';
 import {getBackendSrv, getTemplateSrv} from '@grafana/runtime';
 
-import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
+import {JiraQuery, METRICS, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
 import {doCachedRequest} from "./cache";
@@ -17,7 +18,6 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     routePath = '/tarent';
     url?: string;
-
 
     constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
         super(instanceSettings);
@@ -57,17 +57,13 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
         const promises = options.targets.map(async (target) => {
             switch (target.metric) {
-                case 'changelogRaw':
+                case METRICS.CHANGELOG_RAW:
                     return await this.getChangelogRawData(target);
-                case 'cycletime':
+                case METRICS.CYCLE_TIME:
                     return await this.getCycletimeData(target);
                 default:
                     throw Error("no metric selected")
             }
-            return new MutableDataFrame({
-                refId: target.refId,
-                fields: [],
-            });
         });
 
         return Promise.all(promises).then((data) => ({data}));
@@ -131,7 +127,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     }
 
 
-    private async getChangelogRawData(target: JiraQuery) {
+    private async getChangelogRawData(target: JiraQuery): Promise<MutableDataFrame> {
         const frame = new MutableDataFrame({
             refId: target.refId,
             fields: [
@@ -166,40 +162,32 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     async testDatasource() {
         const fullpath = this.url + this.routePath + "/rest/api/2/myself"
-        const result = await getBackendSrv().get(fullpath)
-
-        return result;
+        return await getBackendSrv().get(fullpath)
     }
 
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
-            {value: 'cycletime', label: 'cycle time'},
-            {value: 'changelogRaw', label: 'change log - raw data'},
-            {value: 'none', label: 'None'},
+            {value: METRICS.CYCLE_TIME, label: 'cycle time'},
+            {value: METRICS.CHANGELOG_RAW, label: 'change log - raw data'},
+            {value: METRICS.NONE, label: 'None'},
         ]
 
         return Promise.resolve({queryTypes: metrics});
     }
 
-    getAvailableStartStatus(): Promise<StatusTypesResponse> {
-        //TODO this must be an
-        const options = [
-            {value: 'In Progress', label: 'In Progress'},
-            {value: 'Done', label: 'Done'},
-            {value: 'New', label: 'New'}
-        ]
+    async getAvailableStatus(query: JiraQuery, fieldName: string): Promise<StatusTypesResponse> {
+        let data = await this.getChangelogRawData(query)
 
-        return Promise.resolve({statusTypes: options});
-    }
+        const view = new DataFrameView(data);
+        let options: Set<string> = new Set()
+        view.forEach((row) => {
+            if (row.field === 'status') {
+                options = options.add(row[fieldName])
+            }
+        });
+        let formatedOptions: any = []
+        options.forEach(option => formatedOptions.push({ 'value': option, 'label': option}))
 
-    getAvailableEndStatus(): Promise<QueryTypesResponse> {
-        //TODO this must be an
-        const options = [
-            {value: 'In Progress', label: 'In Progress'},
-            {value: 'Done', label: 'Done'},
-            {value: 'New', label: 'New'}
-        ]
-
-        return Promise.resolve({queryTypes: options});
+        return Promise.resolve({statusTypes: formatedOptions});
     }
 }
