@@ -162,15 +162,13 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     async testDatasource() {
         const fullpath = this.url + this.routePath + "/rest/api/2/myself"
-        const result = await getBackendSrv().get(fullpath)
-
-        return result;
+        return await getBackendSrv().get(fullpath)
     }
 
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
             {value: METRICS.CYCLE_TIME, label: 'cycle time'},
-            {value: 'changelogRaw', label: 'change log - raw data'},
+            {value: METRICS.CHANGELOG_RAW, label: 'change log - raw data'},
             {value: METRICS.NONE, label: 'None'},
         ]
 
