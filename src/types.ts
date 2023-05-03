@@ -9,6 +9,11 @@ export interface JiraQuery extends DataQuery {
   metric: string;
 }
 
+export const METRICS = {
+  CYCLE_TIME : 'cycletime',
+  NONE : 'none',
+  CHANGELOG_RAW: 'changelogRaw'
+}
 
 /**
  * These are options configured for each DataSource instance

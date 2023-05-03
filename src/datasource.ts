@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import {getBackendSrv, getTemplateSrv} from '@grafana/runtime';
 
-import {JiraQuery, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
+import {JiraQuery, METRICS, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
 import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
 import {doCachedRequest} from "./cache";
@@ -57,9 +57,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
         const promises = options.targets.map(async (target) => {
             switch (target.metric) {
-                case 'changelogRaw':
+                case METRICS.CHANGELOG_RAW:
                     return await this.getChangelogRawData(target);
-                case 'cycletime':
+                case METRICS.CYCLE_TIME:
                     return await this.getCycletimeData(target);
                 default:
                     throw Error("no metric selected")
@@ -169,9 +169,9 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
         const metrics = [
-            {value: 'cycletime', label: 'cycle time'},
+            {value: METRICS.CYCLE_TIME, label: 'cycle time'},
             {value: 'changelogRaw', label: 'change log - raw data'},
-            {value: 'none', label: 'None'},
+            {value: METRICS.NONE, label: 'None'},
         ]
 
         return Promise.resolve({queryTypes: metrics});

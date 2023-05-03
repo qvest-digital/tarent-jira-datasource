@@ -2,7 +2,7 @@ import React, {ChangeEvent} from 'react';
 import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
-import {MyDataSourceOptions, JiraQuery} from '../../types';
+import {MyDataSourceOptions, JiraQuery, METRICS} from '../../types';
 import {AsyncStatusTypeState, useMetricTypes, useStatus} from "./useQueryTypes";
 
 type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
@@ -69,15 +69,15 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
             <InlineField label="Metric" tooltip="Which metric you want to see? " invalid={!metric} error={"this field is required"} required={true}>
                 <Select onChange={onMetricChange} value={metric} options={queryTypes} isLoading={loading} disabled={!!error} />
             </InlineField>
-            {metric === "cycletime"
+            {metric === METRICS.CYCLE_TIME
                 ? <StartStatusSelect datasource={datasource}  onChange={onChange} query={query} ></StartStatusSelect>
                 : ''
             }
-            {metric === "cycletime"
+            {metric === METRICS.CYCLE_TIME
                 ? <EndStatusSelect datasource={datasource}  onChange={onChange}  query={query} ></EndStatusSelect>
                 : ''
             }
-            {metric === "cycletime" &&
+            {metric === METRICS.CYCLE_TIME &&
             <InlineField label="Quantile" required={true}>
                 <Input onChange={onQuantileChange} width={8} type="number" min={1} max={100} value={quantile}/>
             </InlineField>
