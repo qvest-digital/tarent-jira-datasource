@@ -85,6 +85,12 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
             const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
             let dataMap = new Map<string, number>()
+            d3.timeWeek.range(fromDate, toDate).forEach(value => {
+                let cw = d3.timeSunday.count(d3.timeYear(value), value)
+                let cwYear = value.getFullYear().toString() + "-" + (cw < 10 ? 0 : '') + cw
+                dataMap.set(cwYear, 0)
+            })
+
             issues.forEach((issue: Issue) => {
                 let endCreated: Date
                 issue.changelog?.histories?.forEach((historyy: Changelog) => {
@@ -98,18 +104,14 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                                 endCreated = created
                                 let cw = d3.timeSunday.count(d3.timeYear(endCreated), endCreated)
                                 let cwYear = endCreated.getFullYear().toString() + "-" + (cw < 10 ? 0 : '') + cw
-                                if (dataMap.has(cwYear)) {
-                                    dataMap.set(cwYear, dataMap.get(cwYear)! + 1)
-                                } else {
-                                    dataMap.set(cwYear, 1)
-                                }
+                                dataMap.set(cwYear, dataMap.get(cwYear)! + 1)
                             }
                         }
                     })
 
                 })
             })
-            dataMap.forEach((value, key) => {
+            new Map([...dataMap.entries()].sort()).forEach((value, key) => {
                 frame.appendRow([key, value])
             })
         })
