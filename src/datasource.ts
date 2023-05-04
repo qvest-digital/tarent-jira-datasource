@@ -196,8 +196,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 })
             })
         })
-        // const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantile = d3.quantile([22, 9, 44, 36, 2, 15, 29, 16, 58, 53, 23, 93, 93, 8, 219, 31, 65, 2, 153, 100, 71], 0.85)
+        const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
+        const quantile = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
         const quantileField = frame.fields.find((field) => field.name === 'Quantile');
         for (let i = 0; i < quantileField!.values.length; i++) {
             quantileField?.values.set(i, quantile)
