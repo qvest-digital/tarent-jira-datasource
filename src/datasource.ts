@@ -63,6 +63,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                     return await this.getCycletimeData(target);
                 case METRICS.THROUGHPUT:
                     return await this.getThroughputData(target);
+                case METRICS.WORK_ITEM_AGE:
+                    return await this.getWorkItemAge(target);
                 default:
                     throw Error("no metric selected")
             }
@@ -70,6 +72,35 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
         return Promise.all(promises).then((data) => ({data}));
     }
+
+    private async getWorkItemAge(target: JiraQuery): Promise<MutableDataFrame<any>> {
+        const frame = new MutableDataFrame({
+            refId: target.refId,
+            fields: [
+                {name: 'status', type: FieldType.string},
+                {name: 'age', type: FieldType.number},
+
+            ],
+        });
+
+       frame.appendRow(['todo', 1])
+        frame.appendRow(['todo', 2])
+        frame.appendRow(['todo', 4])
+        frame.appendRow(['todo', 10])
+        frame.appendRow(['todo', 4])
+
+        frame.appendRow(['in progress', 33])
+        frame.appendRow(['in progress', 3])
+        frame.appendRow(['in progress', 31])
+        frame.appendRow(['in progress', 2])
+        frame.appendRow(['in progress', 10])
+        frame.appendRow(['in progress', 10])
+
+        return frame;
+    }
+
+
+
 
     private async getThroughputData(target: JiraQuery): Promise<MutableDataFrame<any>> {
         const frame = new MutableDataFrame({
@@ -165,8 +196,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 })
             })
         })
-        const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantile = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
+        // const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
+        const quantile = d3.quantile([22, 9, 44, 36, 2, 15, 29, 16, 58, 53, 23, 93, 93, 8, 219, 31, 65, 2, 153, 100, 71], 0.85)
         const quantileField = frame.fields.find((field) => field.name === 'Quantile');
         for (let i = 0; i < quantileField!.values.length; i++) {
             quantileField?.values.set(i, quantile)
@@ -218,6 +249,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         const metrics = [
             {value: METRICS.CYCLE_TIME, label: 'cycle time'},
             {value: METRICS.THROUGHPUT, label: 'throughput'},
+            {value: METRICS.WORK_ITEM_AGE, label: 'work item age'},
             {value: METRICS.CHANGELOG_RAW, label: 'change log - raw data'},
             {value: METRICS.NONE, label: 'None'},
         ]

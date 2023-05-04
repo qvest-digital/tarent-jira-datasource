@@ -13,7 +13,8 @@ export const METRICS = {
   CYCLE_TIME : 'cycletime',
   NONE : 'none',
   CHANGELOG_RAW: 'changelogRaw',
-  THROUGHPUT: 'throughput'
+  THROUGHPUT: 'throughput',
+  WORK_ITEM_AGE: 'walkItemAge'
 }
 
 /**
