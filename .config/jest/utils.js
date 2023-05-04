@@ -12,17 +12,46 @@ const nodeModulesToTransform = (moduleNames) => `node_modules\/(?!(${moduleNames
 
 // Array of known nested grafana package dependencies that only bundle an ESM version
 const grafanaESModules = [
-  'd3',
-  'd3-color',
-  'd3-force',
-  'd3-interpolate',
-  'd3-scale-chromatic',
-  'ol',
-  'react-colorful',
-  'uuid',
+    'd3',
+    'd3-color',
+    'd3-force',
+    'd3-interpolate',
+    'd3-scale-chromatic',
+    'ol',
+    'react-colorful',
+    'uuid',
+    'internmap',
+    'd3-array',
+    'd3-axis',
+    'd3-brush',
+    'd3-dispatch',
+    'd3-drag',
+    'd3-selection',
+    'd3-transition',
+    'd3-timer',
+    'd3-ease',
+    'd3-chord',
+    'd3-path',
+    'd3-contour',
+    'd3-delaunay',
+    'delaunator',
+    'robust-predicates',
+    'd3-dsv',
+    'd3-fetch',
+    'd3-quadtree',
+    'd3-format',
+    'd3-geo',
+    'd3-hierarchy',
+    'd3-polygon',
+    'd3-random',
+    'd3-scale',
+    'd3-time',
+    'd3-time-format',
+    'd3-shape',
+    'd3-zoom'
 ];
 
 module.exports = {
-  nodeModulesToTransform,
-  grafanaESModules
+    nodeModulesToTransform,
+    grafanaESModules
 }
