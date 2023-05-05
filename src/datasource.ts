@@ -14,6 +14,11 @@ import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
 import {doCachedRequest} from "./cache";
 
+export function computeQuantileValueByFieldName(frame: MutableDataFrame<any>, fieldName: string, quantile: number) {
+    const cycletimeField = frame.fields.find((field) => field.name === fieldName);
+    return d3.quantile(cycletimeField?.values.toArray() as number[], quantile / 100)
+}
+
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
     routePath = '/tarent';
@@ -196,8 +201,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                 })
             })
         })
-        const cycletimeField = frame.fields.find((field) => field.name === 'CycleTime');
-        const quantile = d3.quantile(cycletimeField?.values.toArray() as number[], target.quantile / 100)
+        const quantile = computeQuantileValueByFieldName(frame, 'CycleTime', target.quantile);
         const quantileField = frame.fields.find((field) => field.name === 'Quantile');
         for (let i = 0; i < quantileField!.values.length; i++) {
             quantileField?.values.set(i, quantile)
