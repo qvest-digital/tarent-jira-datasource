@@ -32,7 +32,7 @@ export default function QueryEditorHelp(props: QueryEditorHelpProps<JiraQuery>):
             <p>which metric do you want to try? Please click on it and the wonder will happen</p>
             {examples.map((item, index) => (
                 <div className="cheat-sheet-item" key={index} onClick={(e) => props.onClickExample({ refId: 'A', jqlQuery: item.jqlQuery, metric: item.metric, quantile: item.quantile, endStatus: item.endStatus } as JiraQuery)}>
-                    <div className="cheat-sheet-item__title" >{item.title}</div>
+                    <div className="cheat-sheet-item__title" >Click here for a {item.title} example</div>
                     <div className="cheat-sheet-item__label">{item.label}</div>
                 </div>
             ))}
