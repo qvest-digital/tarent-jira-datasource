@@ -93,6 +93,100 @@
               "type": "linear"
             },
             "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 7
+              },
+              {
+                "color": "red",
+                "value": 9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "9.3.8",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tarent-jira-datasource",
+            "uid": "${DS_JIRA}"
+          },
+          "jqlQuery": "project = 'MAEN'",
+          "metric": "walkItemAge",
+          "refId": "A"
+        }
+      ],
+      "title": "Work Item Age  \"in Progress\"",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "tarent-jira-datasource",
+        "uid": "${DS_JIRA}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
               "mode": "off"
             }
           },
@@ -117,7 +211,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 8
       },
       "id": 3,
       "options": {
@@ -215,7 +309,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 16
       },
       "id": 2,
       "options": {
@@ -266,7 +360,11 @@
   "refresh": false,
   "schemaVersion": 37,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "cycle time scatterplot",
+    "work item age",
+    "throughput"
+  ],
   "templating": {
     "list": []
   },
@@ -274,10 +372,29 @@
     "from": "now-1y",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "type": "timepicker"
+  },
   "timezone": "",
   "title": "overview",
   "uid": "kUdYoTPVk",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "monday"
 }

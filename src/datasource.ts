@@ -82,24 +82,14 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         const frame = new MutableDataFrame({
             refId: target.refId,
             fields: [
-                {name: 'status', type: FieldType.string},
+                {name: 'key', type: FieldType.string},
                 {name: 'age', type: FieldType.number},
-
             ],
         });
 
-       frame.appendRow(['todo', 1])
-        frame.appendRow(['todo', 2])
-        frame.appendRow(['todo', 4])
-        frame.appendRow(['todo', 10])
-        frame.appendRow(['todo', 4])
-
-        frame.appendRow(['in progress', 33])
-        frame.appendRow(['in progress', 3])
-        frame.appendRow(['in progress', 31])
-        frame.appendRow(['in progress', 2])
-        frame.appendRow(['in progress', 10])
-        frame.appendRow(['in progress', 10])
+        for (let i = 0; i < Math.floor(Math.random() * 10 ) + 3; i++) {
+            frame.appendRow(['MAEN-' + Math.floor(Math.random() * 100), Math.floor(Math.random() * 10)+1])
+        }
 
         return frame;
     }
