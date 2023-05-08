@@ -4,6 +4,7 @@ import {getBackendSrv} from "@grafana/runtime";
 const cacheStore = localforage.createInstance({
     name: 'TarentJiraDatasourceRequests'
 });
+// 1 hour in ms
 export const cacheTTL = 60 * 60 * 1000
 
 export type CachedItem = {

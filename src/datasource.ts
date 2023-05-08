@@ -7,57 +7,30 @@ import {
     FieldType,
     DataFrameView,
 } from '@grafana/data';
-import {getBackendSrv, getTemplateSrv} from '@grafana/runtime';
+import {getTemplateSrv} from '@grafana/runtime';
 
 import {JiraQuery, METRICS, MyDataSourceOptions, QueryTypesResponse, StatusTypesResponse} from './types';
-import {Changelog, Issue, SearchResults} from "jira.js/out/version2/models";
+import {Changelog, Issue} from "jira.js/out/version2/models";
 import * as d3 from 'd3';
-import {doCachedRequest} from "./cache";
+import {JiraRequest } from "./JiraRequest";
 
 export function computeQuantileValueByFieldName(frame: MutableDataFrame<any>, fieldName: string, quantile: number) {
-    const cycletimeField = frame.fields.find((field) => field.name === fieldName);
-    return d3.quantile(cycletimeField?.values.toArray() as number[], quantile / 100)
+    const searchedField = frame.fields.find((field) => field.name === fieldName);
+    if (!searchedField) {
+        throw new Error("field " + searchedField + " was not found")
+    }
+    return d3.quantile(searchedField.values.toArray() as number[], quantile / 100)
 }
 
 export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
 
-    routePath = '/tarent';
-    url?: string;
+    private jira
 
     constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
         super(instanceSettings);
-        this.url = instanceSettings.url;
+        this.jira = new JiraRequest(instanceSettings.url!);
     }
 
-    async doChangelogRequest(query: JiraQuery): Promise<Issue[]> {
-        const fullpath = this.url + this.routePath + "/rest/api/2/search"
-        let responses: Array<Promise<SearchResults>> = []
-
-        const params = {jql: query.jqlQuery, expand: 'changelog', fields: "key,name,changelog,issuetype"}
-
-        let firstResponse = doCachedRequest<SearchResults>(fullpath, {startAt: 0, ...params})
-        responses = responses.concat(firstResponse)
-        const firstPage = await firstResponse
-
-        // if there is more than one result page, fetch the other pages asynchronously to speed things up
-        if (firstPage.total! > firstPage.maxResults!){
-            let numberOfPages = Math.ceil(firstPage.total! / firstPage.maxResults!)
-            for (let i=1; i <= numberOfPages; i++){
-                const currentStartAt = i * firstPage.maxResults!
-                responses = responses.concat(doCachedRequest<SearchResults>(fullpath, {startAt: currentStartAt, ...params}))
-            }
-        }
-        let issues: Issue[] = (await Promise.all(responses)).reduce(
-            (accumulator, currentValue) => accumulator = accumulator.concat(currentValue.issues!),
-            [] as Issue[]
-          );
-
-        if (issues.length !== firstPage.total!){
-            throw new Error(`ISSUES_TOTAL_FETCH_ERROR: There is a total of ${firstPage.total} issues but only ${issues.length} could be fetched`);
-        }
-
-        return issues
-    }
 
     async query(options: DataQueryRequest<JiraQuery>): Promise<DataQueryResponse> {
         const promises = options.targets.map(async (target) => {
@@ -70,6 +43,8 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
                     return await this.getThroughputData(target);
                 case METRICS.WORK_ITEM_AGE:
                     return await this.getWorkItemAge(target);
+                case METRICS.RAW_DATA:
+                    return await this.getRawData(target);
                 default:
                     throw Error("no metric selected")
             }
@@ -78,24 +53,60 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         return Promise.all(promises).then((data) => ({data}));
     }
 
-    private async getWorkItemAge(target: JiraQuery): Promise<MutableDataFrame<any>> {
+    private async getWorkItemAge(jiraQuery: JiraQuery): Promise<MutableDataFrame<any>> {
         const frame = new MutableDataFrame({
-            refId: target.refId,
+            refId: jiraQuery.refId,
             fields: [
-                {name: 'key', type: FieldType.string},
-                {name: 'age', type: FieldType.number},
+                {name: 'IssueKey', type: FieldType.string},
+                {name: 'IssueType', type: FieldType.string},
+                {name: 'Status', type: FieldType.string},
+                {name: 'StatusCreated', type: FieldType.time},
+                {name: 'Age', type: FieldType.number},
+                {name: 'Quantile', type: FieldType.number},
             ],
         });
 
-        for (let i = 0; i < Math.floor(Math.random() * 10 ) + 3; i++) {
-            frame.appendRow(['MAEN-' + Math.floor(Math.random() * 100), Math.floor(Math.random() * 10)+1])
+        await this.jira.doChangelogRequest(jiraQuery, ['status']).then(issues => {
+            const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
+            const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
+
+            issues.forEach((issue: Issue) => {
+                let status = issue.fields.status.name
+                if (status !== jiraQuery.status) { return }
+                let issueKey = issue.key
+                let issueType = issue.fields.issuetype.name
+                let endCreated: any
+                issue.changelog?.histories?.forEach((historyy: Changelog) => {
+                    let created = new Date(historyy.created ? historyy.created : "")
+                    if (created < fromDate || created > toDate ) {
+                        return ;
+                    }
+                    historyy.items?.forEach((item: any) => {
+                        if (item.field === 'status') {
+                            if (item.toString === jiraQuery.status) {
+                                if (endCreated == null || endCreated < created) {
+                                    endCreated = created
+                                }
+                            }
+                        }
+                    })
+                })
+                if (endCreated) {
+                    let diff = Math.abs(endCreated.getTime() - new Date().getTime());
+                    let age = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
+                    let row: unknown[] = [issueKey, issueType, jiraQuery.status,endCreated, age]
+                    frame.appendRow(row);
+                }
+            })
+        })
+        const quantile = computeQuantileValueByFieldName(frame, 'Age', jiraQuery.quantile);
+        const quantileField = frame.fields.find((field) => field.name === 'Quantile');
+        for (let i = 0; i < quantileField!.values.length; i++) {
+            quantileField?.values.set(i, quantile)
         }
 
         return frame;
     }
-
-
-
 
     private async getThroughputData(target: JiraQuery): Promise<MutableDataFrame<any>> {
         const frame = new MutableDataFrame({
@@ -107,7 +118,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             ],
         });
 
-        await this.doChangelogRequest(target).then(issues => {
+        await this.jira.doChangelogRequest(target).then(issues => {
             const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
             const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
             let dataMap = new Map<string, number>()
@@ -158,7 +169,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             ],
         });
 
-        await this.doChangelogRequest(target).then(issues => {
+        await this.jira.doChangelogRequest(target).then(issues => {
             const fromDate: Date = new Date(getTemplateSrv().replace("${__from:date:iso}"))
             const toDate: Date =  new Date(getTemplateSrv().replace("${__to:date:iso}"))
 
@@ -200,6 +211,26 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
         return frame;
     }
 
+    private async getRawData(target: JiraQuery): Promise<MutableDataFrame> {
+        const frame = new MutableDataFrame({
+            refId: target.refId,
+            fields: [
+                {name: 'IssueKey', type: FieldType.string},
+                {name: 'IssueType', type: FieldType.string},
+                {name: 'Status', type: FieldType.string},
+            ],
+        });
+        await this.jira.doSearchRequest(target).then(issues => {
+            issues.forEach((issue: any) => {
+                let issueKey = issue.key
+                let issueType = issue.fields.issuetype.name
+                let status = issue.fields.status.name
+                frame.appendRow([issueKey, issueType, status]);
+            })
+        })
+
+        return frame;
+    }
 
     private async getChangelogRawData(target: JiraQuery): Promise<MutableDataFrame> {
         const frame = new MutableDataFrame({
@@ -214,7 +245,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             ],
         });
 
-        await this.doChangelogRequest(target).then(issues => {
+        await this.jira.doChangelogRequest(target).then(issues => {
             issues.forEach((issue: any) => {
                 let issueKey = issue.key
                 let issueType = issue.fields.issuetype.name
@@ -235,8 +266,7 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
     }
 
     async testDatasource() {
-        const fullpath = this.url + this.routePath + "/rest/api/2/myself"
-        return await getBackendSrv().get(fullpath)
+        return this.jira.doTestRequest();
     }
 
     getAvailableMetricTypes(): Promise<QueryTypesResponse> {
@@ -245,13 +275,36 @@ export class DataSource extends DataSourceApi<JiraQuery, MyDataSourceOptions> {
             {value: METRICS.THROUGHPUT, label: 'throughput'},
             {value: METRICS.WORK_ITEM_AGE, label: 'work item age'},
             {value: METRICS.CHANGELOG_RAW, label: 'change log - raw data'},
-            {value: METRICS.NONE, label: 'None'},
+            {value: METRICS.RAW_DATA, label: 'raw data'},
         ]
 
         return Promise.resolve({queryTypes: metrics});
     }
 
-    async getAvailableStatus(query: JiraQuery, fieldName: string): Promise<StatusTypesResponse> {
+    /**
+     * get current available status
+     * @param query
+     */
+    async getAvailableStatus(query: JiraQuery): Promise<StatusTypesResponse> {
+        let data = await this.getRawData(query)
+
+        const view = new DataFrameView(data);
+        let options: Set<string> = new Set()
+        view.forEach((row) => {
+            options = options.add(row['Status'])
+        });
+        let formatedOptions: any = []
+        options.forEach(option => formatedOptions.push({ 'value': option, 'label': option}))
+
+        return Promise.resolve({statusTypes: formatedOptions});
+    }
+
+    /**
+     * get status by changelog / historic values
+     * @param query
+     * @param fieldName
+     */
+    async getAvailableChangelogStatus(query: JiraQuery, fieldName: string): Promise<StatusTypesResponse> {
         let data = await this.getChangelogRawData(query)
 
         const view = new DataFrameView(data);

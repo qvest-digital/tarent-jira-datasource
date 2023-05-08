@@ -7,5 +7,4 @@ import QueryEditorHelp from "./components/QueryEditor/QueryEditorHelp";
 
 export const plugin = new DataSourcePlugin<DataSource, JiraQuery, MyDataSourceOptions>(DataSource)
   .setConfigEditor(ConfigEditor)
-  .setQueryEditor(QueryEditor)
-    .setQueryEditorHelp(QueryEditorHelp);
+  .setQueryEditor(QueryEditor).setQueryEditorHelp(QueryEditorHelp);

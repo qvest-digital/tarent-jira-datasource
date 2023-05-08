@@ -3,13 +3,13 @@ import {InlineField, Input, Select} from '@grafana/ui';
 import {QueryEditorProps, SelectableValue} from '@grafana/data';
 import {DataSource} from '../../datasource';
 import {MyDataSourceOptions, JiraQuery, METRICS} from '../../types';
-import {AsyncStatusTypeState, useMetricTypes, useStatus} from "./useQueryTypes";
+import {AsyncStatusTypeState, useMetricTypes, useChangelogStatus, useLiveStatus} from "./useQueryTypes";
 
 type Props = QueryEditorProps<DataSource, JiraQuery, MyDataSourceOptions>;
 type StatusSelectProps = {datasource: DataSource, query: JiraQuery, onChange: (value: JiraQuery) => void}
 
 export function StartStatusSelect({datasource, query, onChange}: StatusSelectProps) {
-    let asyncStatus: AsyncStatusTypeState = useStatus(datasource, query, 'fromValue');
+    let asyncStatus: AsyncStatusTypeState = useChangelogStatus(datasource, query, 'fromValue');
 
     const onStatusChange = (value: SelectableValue) => {
         onChange({...query, startStatus: value.value});
@@ -23,7 +23,7 @@ export function StartStatusSelect({datasource, query, onChange}: StatusSelectPro
 }
 
 export function EndStatusSelect({datasource, query, onChange}: StatusSelectProps) {
-    let asyncStatus: AsyncStatusTypeState = useStatus(datasource, query, 'toValue');
+    let asyncStatus: AsyncStatusTypeState = useChangelogStatus(datasource, query, 'toValue');
 
     const onStatusChange = (value: SelectableValue) => {
         onChange({...query, endStatus: value.value});
@@ -32,6 +32,20 @@ export function EndStatusSelect({datasource, query, onChange}: StatusSelectProps
     return (
         <InlineField label={'End Status'} required={true}>
             <Select onChange={onStatusChange} value={query.endStatus} options={asyncStatus.statusTypes} isLoading={asyncStatus.loading} disabled={!!asyncStatus.error}/>
+        </InlineField>
+    )
+}
+
+export function StatusSelect({datasource, query, onChange}: StatusSelectProps) {
+    let asyncStatus: AsyncStatusTypeState = useLiveStatus(datasource, query);
+
+    const onStatusChange = (value: SelectableValue) => {
+        onChange({...query, status: value.value});
+    };
+
+    return (
+        <InlineField label={'Status'} required={true}>
+            <Select onChange={onStatusChange} value={query.status} options={asyncStatus.statusTypes} isLoading={asyncStatus.loading} disabled={!!asyncStatus.error}/>
         </InlineField>
     )
 }
@@ -73,14 +87,19 @@ export function QueryEditor({datasource, query, onChange, onRunQuery}: Props) {
                 ? <StartStatusSelect datasource={datasource}  onChange={onChange} query={query} ></StartStatusSelect>
                 : ''
             }
+            {metric === METRICS.WORK_ITEM_AGE
+                ? <StatusSelect datasource={datasource}  onChange={onChange} query={query} ></StatusSelect>
+                : ''
+            }
             {metric === METRICS.CYCLE_TIME || metric === METRICS.THROUGHPUT
                 ? <EndStatusSelect datasource={datasource}  onChange={onChange}  query={query} ></EndStatusSelect>
                 : ''
             }
-            {metric === METRICS.CYCLE_TIME &&
-            <InlineField label="Quantile" required={true}>
-                <Input onChange={onQuantileChange} width={8} type="number" min={1} max={100} value={quantile}/>
-            </InlineField>
+            {metric === METRICS.CYCLE_TIME || metric === METRICS.WORK_ITEM_AGE
+                ? <InlineField label="Quantile" required={true}>
+                    <Input onChange={onQuantileChange} width={8} type="number" min={1} max={100} value={quantile}/>
+                </InlineField>
+               :''
             }
         </div>
     );

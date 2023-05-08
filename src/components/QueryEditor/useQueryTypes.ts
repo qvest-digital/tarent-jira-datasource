@@ -28,9 +28,22 @@ export function useMetricTypes(datasource: DataSource): AsyncQueryTypeState {
   };
 }
 
-export function useStatus(datasource: DataSource, query: JiraQuery, fieldName: string): AsyncStatusTypeState {
+export function useLiveStatus(datasource: DataSource, query: JiraQuery): AsyncStatusTypeState {
   const result = useAsync(async () => {
-    const { statusTypes } = await datasource.getAvailableStatus(query, fieldName);
+    const { statusTypes } = await datasource.getAvailableStatus(query);
+    return statusTypes
+  }, [query]);
+
+  return {
+    loading: result.loading,
+    statusTypes: result.value ?? [],
+    error: result.error,
+  };
+}
+
+export function useChangelogStatus(datasource: DataSource, query: JiraQuery, fieldName: string): AsyncStatusTypeState {
+  const result = useAsync(async () => {
+    const { statusTypes } = await datasource.getAvailableChangelogStatus(query, fieldName);
     return statusTypes
   }, [query]);
 

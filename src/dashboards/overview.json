@@ -70,7 +70,6 @@
         "type": "tarent-jira-datasource",
         "uid": "${DS_JIRA}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -79,7 +78,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "",
+            "axisLabel": "Age (days)",
             "axisPlacement": "auto",
             "fillOpacity": 80,
             "gradientMode": "none",
@@ -93,7 +92,7 @@
               "type": "linear"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "dashed+area"
             }
           },
           "mappings": [],
@@ -103,14 +102,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 7
-              },
-              {
-                "color": "red",
-                "value": 9
               }
             ]
           }
@@ -123,7 +114,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 4,
+      "id": 7,
       "options": {
         "barRadius": 0,
         "barWidth": 0.97,
@@ -141,6 +132,7 @@
           "mode": "single",
           "sort": "none"
         },
+        "xField": "IssueKey",
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
@@ -152,12 +144,161 @@
             "uid": "${DS_JIRA}"
           },
           "jqlQuery": "project = 'MAEN'",
+          "key": "Q-decf7c06-fe99-4a71-b106-1f2f03bb24d2-0",
           "metric": "walkItemAge",
-          "refId": "A"
+          "quantile": 85,
+          "refId": "A",
+          "status": "Need To Talk"
         }
       ],
       "title": "Work Item Age  \"in Progress\"",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyTo": {
+              "id": "byType",
+              "options": "number"
+            },
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Quantile",
+                "handlerKey": "threshold1",
+                "reducerId": "firstNotNull"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Quantile": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Quantile": ""
+            }
+          }
+        }
+      ],
       "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "tarent-jira-datasource",
+        "uid": "${DS_JIRA}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tarent-jira-datasource",
+            "uid": "${DS_JIRA}"
+          },
+          "endStatus": "Done",
+          "jqlQuery": "project = 'MAEN'",
+          "metric": "cycletime",
+          "quantile": 85,
+          "refId": "A",
+          "startStatus": "In Progress"
+        }
+      ],
+      "title": "cycletime scatter plot",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Quantile",
+                "handlerKey": "threshold1",
+                "reducerId": "firstNotNull"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Quantile": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -250,111 +391,6 @@
       ],
       "title": "throughput",
       "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "tarent-jira-datasource",
-        "uid": "${DS_JIRA}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "points",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 7,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "dashed+area"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "tarent-jira-datasource",
-            "uid": "${DS_JIRA}"
-          },
-          "endStatus": "Done",
-          "jqlQuery": "project = 'MAEN'",
-          "metric": "cycletime",
-          "quantile": 85,
-          "refId": "A",
-          "startStatus": "In Progress"
-        }
-      ],
-      "title": "cycletime scatter plot",
-      "transformations": [
-        {
-          "id": "configFromData",
-          "options": {
-            "configRefId": "A",
-            "mappings": [
-              {
-                "fieldName": "Quantile",
-                "handlerKey": "threshold1",
-                "reducerId": "firstNotNull"
-              }
-            ]
-          }
-        }
-      ],
-      "type": "timeseries"
     }
   ],
   "refresh": false,
@@ -369,32 +405,21 @@
     "list": []
   },
   "time": {
-    "from": "now-1y",
-    "to": "now"
+    "from": "2022-08-14T23:56:51.443Z",
+    "to": "2023-05-08T11:58:32.378Z"
   },
   "timepicker": {
     "collapse": false,
     "enable": true,
     "notice": false,
     "now": true,
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
+    "refresh_intervals": [    ],
     "status": "Stable",
     "type": "timepicker"
   },
   "timezone": "",
   "title": "overview",
   "uid": "kUdYoTPVk",
-  "version": 2,
+  "version": 4,
   "weekStart": "monday"
 }
